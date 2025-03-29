@@ -6,6 +6,8 @@ function App() {
   const [inputMessage, setInputMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isVoiceOnlyMode, setIsVoiceOnlyMode] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioRef = useRef(new Audio());
@@ -18,6 +20,25 @@ function App() {
     // Auto-scroll to the latest message
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Setup audio element event listener
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    
+    // When audio ends, check if we're in voice-only mode and should auto-start recording
+    audioElement.onended = () => {
+      if (isVoiceOnlyMode && autoPlay && !isRecording && !isProcessing) {
+        // Short delay before starting next recording
+        setTimeout(() => {
+          startRecording();
+        }, 500);
+      }
+    };
+    
+    return () => {
+      audioElement.onended = null;
+    };
+  }, [isVoiceOnlyMode, autoPlay, isRecording, isProcessing]);
   
   // Start recording audio
   const startRecording = async () => {
@@ -169,56 +190,119 @@ function App() {
     // Clear input
     setInputMessage('');
   };
+
+  // Toggle between voice-only and default mode
+  const toggleMode = () => {
+    setIsVoiceOnlyMode(!isVoiceOnlyMode);
+  };
   
   return (
-    <div className="app-container">
+    <div className={`app-container ${isVoiceOnlyMode ? 'voice-only-mode' : ''}`}>
       <header>
         <h1>Voice Chat Bot</h1>
         <p>Talk to me or type your message!</p>
+        <div className="mode-toggle">
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={isVoiceOnlyMode}
+              onChange={toggleMode}
+            />
+            <span className="slider round"></span>
+          </label>
+          <span className="mode-label">
+            {isVoiceOnlyMode ? 'Voice-Only Mode' : 'Text + Voice Mode'}
+          </span>
+        </div>
+        {isVoiceOnlyMode && (
+          <div className="auto-play-toggle">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={autoPlay}
+                onChange={() => setAutoPlay(!autoPlay)}
+              />
+              Auto-continue conversation
+            </label>
+          </div>
+        )}
       </header>
       
       <div className="chat-container">
-        <div className="messages-container">
-          {messages.length === 0 ? (
-            <div className="empty-state">
-              <p>Press the microphone button and start talking, or type a message below!</p>
-            </div>
-          ) : (
-            messages.map((message, index) => (
-              <div key={index} className={`message ${message.role}`}>
-                <div className="message-content">{message.content}</div>
+        {!isVoiceOnlyMode && (
+          <div className="messages-container">
+            {messages.length === 0 ? (
+              <div className="empty-state">
+                <p>Press the microphone button and start talking, or type a message below!</p>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            ) : (
+              messages.map((message, index) => (
+                <div key={index} className={`message ${message.role}`}>
+                  <div className="message-content">{message.content}</div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
         
-        <div className="input-container">
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
+        {isVoiceOnlyMode ? (
+          <div className="voice-only-container">
+            <div className="voice-status">
+              {isRecording ? (
+                <div className="recording-indicator">
+                  <div className="pulse"></div>
+                  <p>Listening...</p>
+                </div>
+              ) : isProcessing ? (
+                <p>Processing...</p>
+              ) : (
+                <p>Press the button to talk</p>
+              )}
+            </div>
+            
+            <button
+              className={`voice-only-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
+              onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
-            />
-            <button 
-              type="submit" 
-              className="send-button"
-              disabled={isProcessing || inputMessage.trim() === ''}
             >
-              Send
+              {isRecording ? 'Stop' : isProcessing ? 'Processing...' : 'Start Talking'}
             </button>
-          </form>
-          
-          <button
-            className={`mic-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={isProcessing}
-          >
-            {isRecording ? 'Stop' : isProcessing ? 'Processing...' : 'Start Recording'}
-          </button>
-        </div>
+            
+            {messages.length > 0 && (
+              <div className="last-message">
+                <p>Last message: <span>{messages[messages.length - 1].content.substring(0, 50)}...</span></p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="input-container">
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                disabled={isProcessing}
+              />
+              <button 
+                type="submit" 
+                className="send-button"
+                disabled={isProcessing || inputMessage.trim() === ''}
+              >
+                Send
+              </button>
+            </form>
+            
+            <button
+              className={`mic-button ${isRecording ? 'recording' : ''} ${isProcessing ? 'processing' : ''}`}
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing}
+            >
+              {isRecording ? 'Stop' : isProcessing ? 'Processing...' : 'Start Recording'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

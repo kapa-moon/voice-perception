@@ -7,6 +7,7 @@ A simple and cute voice chat application that lets you talk with an AI using you
 - **Voice Input**: Record your voice and have it automatically transcribed
 - **Text Input**: Type messages if you prefer
 - **Voice Output**: Hear AI responses in a natural-sounding voice
+- **Voice-Only Mode**: Switch to a pure voice interface with auto-continuation
 - **Cute Design**: Pleasant UI with a friendly aesthetic
 
 ## Tech Stack
@@ -70,13 +71,23 @@ A simple and cute voice chat application that lets you talk with an AI using you
 
 ## Usage
 
-1. **Voice Chat**:
+1. **Switch Between Modes**:
+   - Toggle the switch at the top to change between "Text + Voice Mode" and "Voice-Only Mode"
+   - In Voice-Only Mode, the conversation history is still maintained but the interface focuses on voice interaction
+
+2. **Voice-Only Mode**:
+   - Click the large circular button to start talking
+   - After the AI responds, it can automatically start listening again (toggle "Auto-continue conversation")
+   - The last message is displayed at the bottom for context
+   - Switch back to Text+Voice mode anytime to see your full conversation history
+
+3. **Voice Chat**:
    - Click the microphone button to start recording
    - Speak your message
    - Click the stop button when you're done
    - Wait for the AI response (both text and audio)
 
-2. **Text Chat**:
+4. **Text Chat**:
    - Type your message in the input field
    - Press Enter or click the Send button
    - Wait for the AI response
